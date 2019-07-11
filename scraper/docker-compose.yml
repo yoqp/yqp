@@ -1,0 +1,10 @@
+version: '3.4'
+services:
+  scraper:
+    build:
+      context: .
+    environment:
+      ENV: development
+    volumes:
+      - .:/app
+      - "$HOME/.aws:/root/.aws"
