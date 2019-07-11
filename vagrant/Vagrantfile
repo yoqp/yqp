@@ -1,0 +1,19 @@
+# coding: utf-8
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+VAGRANTFILE_API_VERSION = "2"
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "centos67"
+  config.vm.network :public_network
+
+  config.vm.provider "virtualbox" do |vb|
+     vb.memory = "1024"
+  end
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "provisioning/site.yml"
+    ansible.groups = {
+      'web' => ['default']
+    }
+    ansible.limit = 'all'
+  end
+end

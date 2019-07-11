@@ -1,0 +1,75 @@
+---
+- hosts: web
+  become: yes
+  tasks:
+    - yum: name=vim state=latest
+    - name: install apache
+      yum: name=httpd state=present
+    - name: start apache and enabled
+      service: name=httpd state=started enabled=yes
+    - name: Setting DocumentRoot
+      replace:
+        dest=/etc/httpd/conf/httpd.conf
+        regexp='DocumentRoot "/var/www/html"'
+        replace='DocumentRoot "/vagrant/app/webroot"'
+    - name: enable htaccess
+      replace:
+        dest=/etc/httpd/conf/httpd.conf
+        regexp='AllowOverride None'
+        replace='AllowOverride All'
+    - name: enable sendfile
+      replace:
+        dest=/etc/httpd/conf/httpd.conf
+        regexp='#EnableSendfile off'
+        replace='EnableSendfile off'
+    - name: remove php of old version
+      yum: name={{item}} state=absent
+      with_items:
+       - php
+       - php-pear
+       - php-devel
+       - php-pdo
+       - php-mysql
+       - php-pgsql
+       - php-gd
+       - php-mbstring
+       - libyaml
+       - libyaml-devel
+    - name: Add repository 'remi-repo'
+      yum: name=http://rpms.famillecollet.com/enterprise/remi-release-6.rpm state=present
+    - name: install php packages
+      yum: name={{ item }} state=present enablerepo=remi,remi-php56
+      with_items:
+       - php
+       - php-pear
+       - php-devel
+       - php-pdo
+       - php-mysql
+       - php-pgsql
+       - php-gd
+       - php-mbstring
+       - libyaml
+       - libyaml-devel
+    - name: make yaml.ini
+      shell: echo "extension=yaml.so" > /etc/php.d/yaml.ini
+    - name: copy database setting
+      shell: cp /vagrant/provisioning/database.php_local /vagrant/app/Config/database.php
+    - name: setting PHP
+      replace: >
+       dest=/etc/php.ini
+       regexp="^;date\.timezone ="
+       replace="date.timezone = Asia/Tokyo"
+      notify:
+       - restart apache
+    - name: install cowsay
+      yum: name=cowsay state=present
+    - name: add /etc/profile.d/motd.sh
+      copy: >
+        src=cow
+        dest=/etc/profile.d/motd.sh
+        owner=root
+        group=root
+        mode=0755
+  handlers:
+    - name: restart apache
+      service: name=httpd state=restarted enabled=yes

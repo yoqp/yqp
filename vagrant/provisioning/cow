@@ -1,0 +1,1 @@
+hostname -I | awk '{print "  Your website is......\n http://"$2}' | /usr/bin/cowsay
